@@ -16,6 +16,8 @@ model Utilisateur {
   telephone     String?
   dateNaissance DateTime?
   cni           String?   @unique
+  cniRecto      String?
+  cniVerso      String?
   demandes      Demande[]
   createdAt     DateTime  @default(now())
 }
@@ -31,11 +33,12 @@ model AdminMairie {
 }
 
 model Demande {
-  id                String    @id @default(uuid())
+  id                String      @id @default(uuid())
+  codeUnique        String      @unique
   utilisateurId     String
   utilisateur       Utilisateur @relation(fields: [utilisateurId], references: [id])
   typeActe          String
-  statut            String    @default("EN_ATTENTE")
+  statut            String      @default("EN_ATTENTE")
   donnees           Json
   codeUnique        String    @unique
   raisonRejet       String?
@@ -43,8 +46,8 @@ model Demande {
   dateDisponibilite DateTime?
   verificationIA    Json?
   documents         Document[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 }
 
 model Document {
