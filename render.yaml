@@ -4,8 +4,9 @@ services:
     env: node
     plan: free
     branch: main
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    root: backend
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -23,8 +24,9 @@ services:
     env: static
     plan: free
     branch: main
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
+    root: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
         sync: false
