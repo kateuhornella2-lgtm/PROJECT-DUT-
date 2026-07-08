@@ -30,6 +30,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const codeUnique = genererCodeUnique();
 
+    console.log('Données reçues:', { typeActe, donnees, utilisateurId });
     const demande = await prisma.demande.create({
       data: { utilisateurId, typeActe, donnees, statut: 'EN_ATTENTE', codeUnique },
       include: { utilisateur: true }
