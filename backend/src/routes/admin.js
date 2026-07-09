@@ -120,7 +120,6 @@ router.patch('/demandes/:id/confirmer', adminMiddleware, async (req, res) => {
     const demandeUpdated = await prisma.demande.update({
       where: { id: req.params.id },
       data: {
-        etapeConfirmation: 'RENDEZ_VOUS_FIXE',
         codeRecuperation: codeRecuperation,
         dateConfirmation: new Date()
       }
