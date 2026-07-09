@@ -12,6 +12,23 @@ const genererCodeUnique = () => {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 };
 
+const findDemandesAdmin = async (filtre) => {
+  try {
+    return await prisma.demande.findMany({
+      where: filtre,
+      include: { utilisateur: true, documents: true, rendezVous: true },
+      orderBy: { createdAt: 'desc' }
+    });
+  } catch (error) {
+    console.warn('Prisma rendezVous include not available, retrying without rendezVous:', error.message);
+    return await prisma.demande.findMany({
+      where: filtre,
+      include: { utilisateur: true, documents: true },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+};
+
 // Toutes les demandes
 router.get('/demandes', adminMiddleware, async (req, res) => {
   try {
@@ -20,11 +37,7 @@ router.get('/demandes', adminMiddleware, async (req, res) => {
     if (statut) filtre.statut = statut;
     if (typeActe) filtre.typeActe = typeActe;
 
-    const demandes = await prisma.demande.findMany({
-      where: filtre,
-      include: { utilisateur: true, documents: true, rendezVous: true },
-      orderBy: { createdAt: 'desc' }
-    });
+    const demandes = await findDemandesAdmin(filtre);
 
     res.json({ demandes });
   } catch (error) {
