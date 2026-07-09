@@ -61,8 +61,7 @@ router.patch('/demandes/:id/accepter', adminMiddleware, async (req, res) => {
     const demandeUpdated = await prisma.demande.update({
       where: { id: req.params.id },
       data: {
-        statut: 'ACCEPTE',
-        etapeConfirmation: 'EMAIL_ENVOYE'
+        statut: 'ACCEPTE'
       }
     });
 
