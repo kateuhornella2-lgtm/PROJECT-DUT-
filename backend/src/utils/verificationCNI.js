@@ -2,7 +2,18 @@ const Groq = require('groq-sdk');
 const fs = require('fs');
 const path = require('path');
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groqApiKey = process.env.GROQ_API_KEY || '';
+let groq = null;
+if (groqApiKey) {
+  try {
+    groq = new Groq({ apiKey: groqApiKey });
+  } catch (err) {
+    console.warn('Failed to initialize Groq client:', err && err.message ? err.message : err);
+    groq = null;
+  }
+} else {
+  console.warn('GROQ_API_KEY is missing — document verification disabled.');
+}
 
 const verifierCNI = async (cheminFichier) => {
   try {
@@ -17,6 +28,11 @@ const verifierCNI = async (cheminFichier) => {
         valide: false,
         message: 'Veuillez fournir une photo ou scan de votre CNI en format JPG ou PNG, pas un PDF.'
       };
+    }
+
+    if (!groq) {
+      console.warn('Groq client unavailable, skipping CNI verification.');
+      return { valide: false, message: 'Service de vérification temporairement indisponible.' };
     }
 
     const response = await groq.chat.completions.create({
