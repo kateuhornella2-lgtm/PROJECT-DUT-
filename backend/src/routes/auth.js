@@ -30,43 +30,49 @@ const upload = multer({
 // Inscription citoyen avec CNI
 const { verifyCNI } = require('../utils/verificationService');
 
-router.post('/inscription', upload.fields([
-  { name: 'cniRecto', maxCount: 1 },
-  { name: 'cniVerso', maxCount: 1 },
-  { name: 'selfie', maxCount: 1 }
-]), async (req, res) => {
+router.post('/inscription', async (req, res) => {
   try {
     if (!req.body) {
       return res.status(400).json({ message: 'Le formulaire n\'a pas été envoyé correctement.' });
     }
 
-    const { nom, prenom, email, motDePasse, telephone } = req.body;
+    const { nom, prenom, email, motDePasse, telephone, cni } = req.body;
 
     if (!nom || !prenom || !email || !motDePasse) {
       return res.status(400).json({ message: 'Tous les champs obligatoires doivent être remplis' });
     }
 
-    if (!req.files?.cniRecto || !req.files?.cniVerso) {
-      return res.status(400).json({ message: 'Le recto et le verso de votre CNI sont obligatoires' });
-    }
+    // CNI uploads are now optional. If provided, they'll be verified; otherwise registration proceeds.
 
     const utilisateurExistant = await prisma.utilisateur.findUnique({ where: { email } });
     if (utilisateurExistant) {
       return res.status(400).json({ message: 'Cet email est déjà utilisé' });
     }
 
-    // Vérification CNI par IA
-    const cheminRecto = `uploads/${req.files.cniRecto[0].filename}`;
-    const cheminVerso = `uploads/${req.files.cniVerso[0].filename}`;
-
-    const verifRecto = await verifierCNI(cheminRecto);
-    if (!verifRecto.valide) {
-      return res.status(400).json({ message: `CNI Recto : ${verifRecto.message}` });
+    if (cni) {
+      const utilisateurParCNI = await prisma.utilisateur.findUnique({ where: { cni } });
+      if (utilisateurParCNI) {
+        return res.status(400).json({ message: 'Ce numéro de CNI est déjà utilisé' });
+      }
     }
 
-    const verifVerso = await verifierCNI(cheminVerso);
-    if (!verifVerso.valide) {
-      return res.status(400).json({ message: `CNI Verso : ${verifVerso.message}` });
+
+    // Vérification CNI par IA seulement si des fichiers ont été envoyés
+    let cheminRecto = null;
+    let cheminVerso = null;
+    if (req.files?.cniRecto && req.files?.cniVerso) {
+      cheminRecto = `uploads/${req.files.cniRecto[0].filename}`;
+      cheminVerso = `uploads/${req.files.cniVerso[0].filename}`;
+
+      const verifRecto = await verifierCNI(cheminRecto);
+      if (!verifRecto.valide) {
+        return res.status(400).json({ message: `CNI Recto : ${verifRecto.message}` });
+      }
+
+      const verifVerso = await verifierCNI(cheminVerso);
+      if (!verifVerso.valide) {
+        return res.status(400).json({ message: `CNI Verso : ${verifVerso.message}` });
+      }
     }
 
     const motDePasseHash = await bcrypt.hash(motDePasse, 10);
@@ -76,8 +82,9 @@ router.post('/inscription', upload.fields([
         nom, prenom, email,
         motDePasse: motDePasseHash,
         telephone,
-        cniRecto: `/${cheminRecto}`,
-        cniVerso: `/${cheminVerso}`,
+        ...(cni ? { cni } : {}),
+        ...(cheminRecto ? { cniRecto: `/${cheminRecto}` } : {}),
+        ...(cheminVerso ? { cniVerso: `/${cheminVerso}` } : {}),
       }
     });
 
@@ -85,9 +92,9 @@ router.post('/inscription', upload.fields([
     let verification = null;
     try {
       if (process.env.GOOGLE_APPLICATION_CREDENTIALS && (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY)) {
-        const cniRectoPath = path.join(process.cwd(), 'uploads', req.files.cniRecto[0].filename);
-        const cniVersoPath = path.join(process.cwd(), 'uploads', req.files.cniVerso[0].filename);
-        const selfiePath = req.files.selfie ? path.join(process.cwd(), 'uploads', req.files.selfie[0].filename) : null;
+        const cniRectoPath = req.files?.cniRecto ? path.join(process.cwd(), 'uploads', req.files.cniRecto[0].filename) : null;
+        const cniVersoPath = req.files?.cniVerso ? path.join(process.cwd(), 'uploads', req.files.cniVerso[0].filename) : null;
+        const selfiePath = req.files?.selfie ? path.join(process.cwd(), 'uploads', req.files.selfie[0].filename) : null;
         verification = await verifyCNI({ cniRectoPath, cniVersoPath, selfiePath, form: { nom, prenom } });
       }
     } catch (vErr) {

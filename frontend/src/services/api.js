@@ -10,9 +10,7 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-export const inscription = (formData) => API.post('/auth/inscription', formData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
+export const inscription = (data) => API.post('/auth/inscription', data);
 export const connexion = (data) => API.post('/auth/connexion', data);
 export const connexionAdmin = (data) => API.post('/auth/admin/connexion', data);
 export const getMesDemandes = () => API.get('/demandes/mes-demandes');

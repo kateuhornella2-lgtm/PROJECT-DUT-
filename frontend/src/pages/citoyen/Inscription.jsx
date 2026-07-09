@@ -2,83 +2,30 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { inscription } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { FileText, User, Mail, Phone, Lock, Eye, EyeOff, Camera, Upload, CheckCircle, Shield, Key, QrCode } from 'lucide-react';
-
-function UploadCNI({ label, name, onChange, preview }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label} *</label>
-      <label className="cursor-pointer block">
-        {preview ? (
-          <div className="relative border-2 border-green-400 rounded-xl overflow-hidden h-32">
-            <img src={preview} alt={label} className="w-full h-full object-cover" />
-            <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1">
-              <CheckCircle size={14} color="white" />
-            </div>
-          </div>
-        ) : (
-          <div className="border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center gap-2 hover:border-green-400 hover:bg-green-50 transition">
-            <Camera size={24} className="text-gray-400" />
-            <p className="text-xs text-gray-500 text-center">Photo ou scan<br/>JPG, PNG, PDF</p>
-          </div>
-        )}
-        <input type="file" name={name} accept="image/*,application/pdf"
-          className="hidden" onChange={onChange} />
-      </label>
-    </div>
-  );
-}
+import { FileText, User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle, Shield, Key, QrCode } from 'lucide-react';
 
 export default function Inscription() {
   const navigate = useNavigate();
   const { loginCitoyen } = useAuth();
-  const [form, setForm] = useState({ nom: '', prenom: '', email: '', motDePasse: '', telephone: '' });
-  const [cniRecto, setCniRecto] = useState(null);
-  const [cniVerso, setCniVerso] = useState(null);
-  const [previewRecto, setPreviewRecto] = useState(null);
-  const [previewVerso, setPreviewVerso] = useState(null);
-  const [selfie, setSelfie] = useState(null);
-  const [previewSelfie, setPreviewSelfie] = useState(null);
+  const [form, setForm] = useState({ nom: '', prenom: '', email: '', motDePasse: '', telephone: '', cni: '' });
+  
   const [erreur, setErreur] = useState('');
   const [chargement, setChargement] = useState(false);
   const [voirMdp, setVoirMdp] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleCNI = (side) => (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    if (side === 'recto') { setCniRecto(file); setPreviewRecto(url); }
-    else { setCniVerso(file); setPreviewVerso(url); }
-  };
-
-  const handleSelfie = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setSelfie(file);
-    setPreviewSelfie(url);
-  };
+  // CNI uploads removed — no handler needed
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErreur('');
 
-    if (!cniRecto || !cniVerso) {
-      setErreur('Veuillez fournir le recto et le verso de votre CNI');
-      return;
-    }
-
     setChargement(true);
     try {
-      const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-      formData.append('cniRecto', cniRecto);
-      formData.append('cniVerso', cniVerso);
-      if (selfie) formData.append('selfie', selfie);
+      const payload = { ...form };
 
-      const res = await inscription(formData);
+      const res = await inscription(payload);
       loginCitoyen(res.data.token, res.data.utilisateur);
       navigate('/dashboard');
     } catch (err) {
@@ -103,31 +50,14 @@ export default function Inscription() {
           </div>
         </div>
 
-          {/* Selfie */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Selfie de vérification *</label>
-            <label className="cursor-pointer block">
-              {previewSelfie ? (
-                <div className="relative border-2 border-green-400 rounded-xl overflow-hidden h-32">
-                  <img src={previewSelfie} alt="selfie" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center gap-2 hover:border-green-400 hover:bg-green-50 transition">
-                  <Camera size={24} className="text-gray-400" />
-                  <p className="text-xs text-gray-500 text-center">Prenez une photo de votre visage (JPG, PNG)</p>
-                </div>
-              )}
-              <input type="file" name="selfie" accept="image/*" className="hidden" onChange={handleSelfie} />
-            </label>
-            <p className="text-xs text-gray-500 mt-2">Le selfie sera comparé à la photo présente sur votre CNI.</p>
-          </div>
+          {/* Selfie removed per request */}
         <div>
           <h2 className="text-3xl font-bold mb-4 leading-tight">Inscription sécurisée</h2>
           <p className="text-green-100 mb-6">Votre CNI est requise pour garantir l'authenticité de vos demandes administratives.</p>
          
           <div className="space-y-3">
             {[
-              { Icon: Shield, text: 'CNI recto/verso obligatoire' },
+              { Icon: Shield, text: 'Numéro CNI requis' },
               { Icon: Key, text: 'Code unique pour chaque demande' },
               { Icon: QrCode, text: 'QR code envoyé par email' },
               { Icon: CheckCircle, text: 'Vérification possible sans connexion' },
@@ -167,18 +97,7 @@ export default function Inscription() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* CNI */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Upload size={16} className="text-yellow-700" />
-                <p className="text-sm font-semibold text-yellow-800">Carte Nationale d'Identité (CNI) *</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <UploadCNI label="Recto" name="cniRecto" onChange={handleCNI('recto')} preview={previewRecto} />
-                <UploadCNI label="Verso" name="cniVerso" onChange={handleCNI('verso')} preview={previewVerso} />
-              </div>
-              <p className="text-xs text-yellow-700 mt-2">📸 Prenez une photo claire ou scannez votre CNI</p>
-            </div>
+            {/* CNI uploads removed per request */}
 
             {/* Nom & Prénom */}
             <div className="grid grid-cols-2 gap-3">
@@ -210,6 +129,17 @@ export default function Inscription() {
                 <input name="email" type="email" value={form.email} onChange={handleChange} required
                   className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                   placeholder="exemple@gmail.com" />
+              </div>
+            </div>
+
+            {/* Numéro CNI */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Numéro de la carte d'identité (CNI) *</label>
+              <div className="relative">
+                <Shield size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input name="cni" value={form.cni} onChange={handleChange} required
+                  className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                  placeholder="1234567890" />
               </div>
             </div>
 
