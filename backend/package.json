@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "postinstall": "prisma generate && prisma db push --skip-generate",
-    "migrate": "prisma db push",
+    "postinstall": "prisma generate && prisma db push --skip-interactive --accept-data-loss",
+    "migrate": "prisma db push --skip-interactive --accept-data-loss",
     "seed": "node seedData.js && node seedAdmin.js"
   },
   "keywords": [],
