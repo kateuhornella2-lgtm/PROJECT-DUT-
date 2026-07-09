@@ -4,7 +4,7 @@ import { getDemandesAdmin, accepterDemande, rejeterDemande } from '../../service
 import { useAuth } from '../../context/AuthContext';
 import {
   FileText, LogOut, CheckCircle, XCircle, Clock,
-  User, ChevronDown, Building2, Check, X, Calendar, Mail
+  User, ChevronDown, Building2, Check, X, Calendar
 } from 'lucide-react';
 
 const statutConfig = {
@@ -14,14 +14,6 @@ const statutConfig = {
   REJETE: { label: 'Rejeté', couleur: 'bg-red-100 text-red-800', Icon: XCircle },
   RENDEZ_VOUS_PROGRAMME: { label: 'RDV programmé', couleur: 'bg-purple-100 text-purple-800', Icon: Calendar },
   ACTE_DISPONIBLE: { label: 'Disponible', couleur: 'bg-teal-100 text-teal-800', Icon: CheckCircle },
-};
-
-const etapeConfirmationConfig = {
-  EN_ATTENTE: { label: 'En attente d\'acceptation', couleur: 'bg-gray-50 text-gray-700', Icon: Clock },
-  EMAIL_ENVOYE: { label: 'Email de confirmation envoyé', couleur: 'bg-blue-50 text-blue-700', Icon: Mail },
-  CONFIRME: { label: 'Informations confirmées', couleur: 'bg-purple-50 text-purple-700', Icon: CheckCircle },
-  MODIFICATIONS_DEMANDEES: { label: 'Modifications demandées', couleur: 'bg-orange-50 text-orange-700', Icon: Clock },
-  RENDEZ_VOUS_FIXE: { label: 'Rendez-vous fixé', couleur: 'bg-green-50 text-green-700', Icon: CheckCircle },
 };
 
 export default function DashboardAdmin() {
@@ -250,20 +242,6 @@ export default function DashboardAdmin() {
                           <Icon size={12} /> {config.label}
                         </span>
                       </div>
-                      
-                      {/* Afficher l'étape de confirmation */}
-                      {demande.etapeConfirmation && (
-                        <div className="flex items-center gap-2 mb-2">
-                          {(() => {
-                            const etapeConfig = etapeConfirmationConfig[demande.etapeConfirmation];
-                            return (
-                              <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full border ${etapeConfig.couleur}`}>
-                                <etapeConfig.Icon size={12} /> {etapeConfig.label}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      )}
 
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <User size={13} className="text-gray-400" />
