@@ -44,9 +44,23 @@ model Demande {
   dateRendezVous    DateTime?
   dateDisponibilite DateTime?
   verificationIA    Json?
+  codeRecuperation  String?     @unique
+  dateConfirmation  DateTime?
   documents         Document[]
+  rendezVous        RendezVous?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+}
+
+model RendezVous {
+  id               String   @id @default(uuid())
+  demandeId        String   @unique
+  demande          Demande  @relation(fields: [demandeId], references: [id])
+  dateRendezVous   DateTime
+  codeRecuperation String   @unique
+  statut           String   @default("FIXE")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Document {
